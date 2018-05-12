@@ -12,6 +12,8 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from sklearn import svm
 from sklearn.model_selection import cross_val_score
 import time
+from pymongo import MongoClient
+
 
 
 # In[2]:
@@ -20,11 +22,49 @@ import time
 starttime=time.time()
 
 
+
+# In[2]:
+#
+# import os
+# cwd = os.getcwd()
+# print(cwd)
+# price = pd.read_csv("../ml-model/price_data.csv",encoding = "ISO-8859-1")
+# news = pd.read_csv("../ml-model/news_data.csv",encoding = "ISO-8859-1")
+
+
 # In[3]:
+def convertDataTypeForPrice(p):
+    return {
+        'exchange': p['exchange'],
+        'id': p['id'],
+        'price': float(p['price']),
+        'timestamp': int(p['timestamp'])
+           }
 
+def convertDataTypeForNews(n):
+    return {
+        'title': n['title'],
+        'time': int(n['time']),
+        'text': n['text'],
+        'weight': int(n['weight']),
+        'source': n['source']
+    }
 
-price = pd.read_csv("price_data.csv",encoding = "ISO-8859-1")
-news = pd.read_csv("news_data.csv",encoding = "ISO-8859-1")
+def mongoToPd(db, collectionName, convertFunc, query=None):
+    collection = db[collectionName]
+    dataList = list(collection.find({}))
+    return pd.DataFrame(list(map(convertFunc, dataList)))
+
+client = MongoClient('localhost', 27017)
+db = client['cs5412']
+# news_data_db = db['news_data']
+# price_data_db = db['price_data']
+#
+# news = pd.DataFrame(list(news_data_db.find({}, {'_id': 0, 'title': 1, 'time': 1, 'text': 1, 'weight': 1, 'source': 1})))
+# price = pd.DataFrame(list(price_data_db.find({}, {'_id': 0, 'id': 1, 'price': 1, 'timestamp': 1, 'exchange': 1})))
+
+news = mongoToPd(db, 'news_data', convertDataTypeForNews)
+price = mongoToPd(db, 'price_data', convertDataTypeForPrice)
 
 
 # In[4]:
@@ -32,6 +72,7 @@ news = pd.read_csv("news_data.csv",encoding = "ISO-8859-1")
 
 price = price.drop(['id','exchange'], 1)
 price=price.sort_values(by=['timestamp'],ascending=True)
+price_now = price['price'][price.last_valid_index()]
 
 
 # In[5]:
@@ -78,7 +119,7 @@ for row in price.iterrows():
             daily_headlines.append(row_[1]['text'])
         else:
             continue
-            
+
     justb = np.array(daily_headlines)
     #print (justb.shape)
     headlines.append(justb)
@@ -96,7 +137,7 @@ headlines = np.array(headlines)
 # In[11]:
 
 
-contractions = { 
+contractions = {
 "ain't": "am not",
 "aren't": "are not",
 "can't": "cannot",
@@ -178,11 +219,11 @@ contractions = {
 
 def clean_text(text, remove_stopwords = True):
     '''Remove unwanted characters and format the text to create fewer nulls word embeddings'''
-    
+
     # Convert words to lower case
     text = text.lower()
-    
-    # Replace contractions with their longer forms 
+
+    # Replace contractions with their longer forms
     if True:
         text = text.split()
         new_text = []
@@ -192,10 +233,10 @@ def clean_text(text, remove_stopwords = True):
             else:
                 new_text.append(word)
         text = " ".join(new_text)
-    
+
     # Format words and remove unwanted characters
-    text = re.sub(r'&amp;', '', text) 
-    text = re.sub(r'0,0', '00', text) 
+    text = re.sub(r'&amp;', '', text)
+    text = re.sub(r'0,0', '00', text)
     text = re.sub(r'[_"\-;%()|.,+&=*%.,!?:#@\[\]]', ' ', text)
     text = re.sub(r'\'', ' ', text)
     text = re.sub(r'\$', ' $ ', text)
@@ -207,7 +248,7 @@ def clean_text(text, remove_stopwords = True):
     text = re.sub(r' yr ', ' year ', text)
     text = re.sub(r' l g b t ', ' lgbt ', text)
     text = re.sub(r'0km ', '0 km ', text)
-    
+
     # Optionally, remove stop words
     if remove_stopwords:
         text = text.split()
@@ -323,15 +364,15 @@ print (endtime-starttime)
 plt.plot(numpy.reshape(lastone, lastone[0].shape)[math.ceil(endtime-starttime):]*10,'r')
 plt.title("Predicted (red) ")
 plt.xlabel("Time")
-plt.ylabel("Predicted Price")
+plt.ylabel("Predicted Price Difference")
 #plt.axis([endtime-starttime,80, 0, 10])
-plt.show()
+#plt.show()
 plt.savefig('predictions.png')
 
 
 # In[26]:
-
+price_predicted = price_now + lastone[0][-1][0]
+result = db['prediction_data'].insert_one({'price_predicted': price_predicted})
 
 a=numpy.reshape(lastone, lastone[0].shape)
 a
-
