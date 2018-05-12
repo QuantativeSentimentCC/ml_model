@@ -1,4 +1,3 @@
-
 # coding: utf-8
 
 # In[1]:
@@ -78,7 +77,7 @@ for row in price.iterrows():
             daily_headlines.append(row_[1]['text'])
         else:
             continue
-            
+
     justb = np.array(daily_headlines)
     #print (justb.shape)
     headlines.append(justb)
@@ -96,7 +95,7 @@ headlines = np.array(headlines)
 # In[11]:
 
 
-contractions = { 
+contractions = {
 "ain't": "am not",
 "aren't": "are not",
 "can't": "cannot",
@@ -178,11 +177,11 @@ contractions = {
 
 def clean_text(text, remove_stopwords = True):
     '''Remove unwanted characters and format the text to create fewer nulls word embeddings'''
-    
+
     # Convert words to lower case
     text = text.lower()
-    
-    # Replace contractions with their longer forms 
+
+    # Replace contractions with their longer forms
     if True:
         text = text.split()
         new_text = []
@@ -192,10 +191,10 @@ def clean_text(text, remove_stopwords = True):
             else:
                 new_text.append(word)
         text = " ".join(new_text)
-    
+
     # Format words and remove unwanted characters
-    text = re.sub(r'&amp;', '', text) 
-    text = re.sub(r'0,0', '00', text) 
+    text = re.sub(r'&amp;', '', text)
+    text = re.sub(r'0,0', '00', text)
     text = re.sub(r'[_"\-;%()|.,+&=*%.,!?:#@\[\]]', ' ', text)
     text = re.sub(r'\'', ' ', text)
     text = re.sub(r'\$', ' $ ', text)
@@ -207,7 +206,7 @@ def clean_text(text, remove_stopwords = True):
     text = re.sub(r' yr ', ' year ', text)
     text = re.sub(r' l g b t ', ' lgbt ', text)
     text = re.sub(r'0km ', '0 km ', text)
-    
+
     # Optionally, remove stop words
     if remove_stopwords:
         text = text.split()
@@ -334,4 +333,3 @@ plt.savefig('predictions.png')
 
 a=numpy.reshape(lastone, lastone[0].shape)
 a
-
