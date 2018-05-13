@@ -72,7 +72,7 @@ price = mongoToPd(db, 'price_data', convertDataTypeForPrice)
 price = price.drop(['id','exchange'], 1)
 price=price.sort_values(by=['timestamp'],ascending=True)
 price_now = price['price'][price.last_valid_index()]
-
+timestamp_now = price['timestamp'][price.last_valid_index()]
 
 # In[5]:
 
@@ -370,8 +370,10 @@ plt.savefig('predictions.png')
 
 
 # In[26]:
-price_predicted = price_now + lastone[0][-1][0]
-result = db['prediction_data'].insert_one({'price_predicted': price_predicted})
+price_predicted = str(price_now + lastone[0][-1][0])
+timestamp_next = str(timestamp_now + 60)
+pred = {'price_predicted': price_predicted, 'timestamp': timestamp_next}
+result = db['prediction_data'].insert_one(pred)
 
 a=numpy.reshape(lastone, lastone[0].shape)
 a
